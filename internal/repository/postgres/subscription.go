@@ -54,7 +54,7 @@ func (r *SubscriptionRepository) CreateSubscription(ctx context.Context, sub *mo
                   VALUES ($1, $2, $3, $4, $5) RETURNING id`
 	err := r.pool.QueryRow(ctx, query, sub.ServiceName, sub.Price, sub.UserID, sub.StartDate, sub.EndDate).Scan(&sub.ID)
 	if err != nil {
-		slog.Error("Failed to create subscription", "error", err, "subscription_struct", sub)
+		slog.Error("Failed to create subscription", "error", err, "subscription", sub)
 		return fmt.Errorf("failed to create subscription: %w", err)
 	}
 
@@ -63,8 +63,16 @@ func (r *SubscriptionRepository) CreateSubscription(ctx context.Context, sub *mo
 }
 
 func (r *SubscriptionRepository) GetSubscriptionByID(ctx context.Context, id uuid.UUID) (*models.Subscription, error) {
-	//TODO implement me
-	panic("implement me")
+	query := `SELECT * FROM subscriptions WHERE id = $1`
+	sub := &models.Subscription{}
+	err := r.pool.QueryRow(ctx, query, id).Scan(&sub)
+	if err != nil {
+		slog.Error("Failed to get subscription", "error", err, "id", id)
+		return nil, fmt.Errorf("failed to get subscription: %w", err)
+	}
+
+	slog.Debug("Subscription found", "subscription", sub)
+	return sub, nil
 }
 
 func (r *SubscriptionRepository) GetAllSubscriptions(ctx context.Context) ([]models.Subscription, error) {

@@ -3,7 +3,8 @@ package config
 import (
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/joho/godotenv"
-	"log"
+	"log/slog"
+	"os"
 )
 
 type Config struct {
@@ -15,12 +16,16 @@ type Config struct {
 
 func Load() *Config {
 	if err := godotenv.Load(".env"); err != nil {
-		log.Fatalf("Error loading .env file: %s", err)
+		slog.Error("Error loading .env file", "error", err)
+		os.Exit(1)
 	}
 
 	cfg := &Config{}
 	if err := cleanenv.ReadEnv(cfg); err != nil {
-		log.Fatalf("Error reading env to config: %s", err)
+		slog.Error("Error reading env to config", err)
+		os.Exit(1)
 	}
+
+	slog.Info("Environment variables loaded")
 	return cfg
 }

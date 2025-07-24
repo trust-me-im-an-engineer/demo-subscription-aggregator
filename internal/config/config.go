@@ -9,9 +9,14 @@ import (
 
 type Config struct {
 	AppPort string `env:"APP_PORT" env-required:"true"`
-	DBUser  string `env:"DB_USER" env-required:"true"`
-	DBPass  string `env:"DB_PASSWORD" env-required:"true"`
-	DBName  string `env:"DB_NAME" env-required:"true"`
+	DB      DBConfig
+}
+type DBConfig struct {
+	Host string `env:"DB_HOST" env-default:"localhost"`
+	Port int    `env:"DB_PORT" env-default:"5432"`
+	User string `env:"DB_USER" env-required:"true"`
+	Pass string `env:"DB_PASSWORD" env-required:"true"`
+	Name string `env:"DB_NAME" env-required:"true"`
 }
 
 func Load() *Config {

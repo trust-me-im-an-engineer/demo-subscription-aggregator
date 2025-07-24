@@ -8,7 +8,7 @@ import (
 
 // Subscription представляет подписку в базе данных и в ответах
 type Subscription struct {
-	ID          uuid.UUID    `db:"id"`
+	ID          uuid.UUID    `json:"id" db:"id"`
 	ServiceName string       `json:"service_name" db:"service_name"`
 	Price       int          `json:"price" db:"price"`
 	UserID      uuid.UUID    `json:"user_id" db:"user_id"`
@@ -25,7 +25,17 @@ type CreateSubscriptionRequest struct {
 	EndDate     *string   `json:"end_date,omitempty"`
 }
 
-// UpdateSubscriptionRequest DTO для запроса изменения подписки
+// ReplaceSubscriptionRequest DTO для запроса замены подписки (PUT метод)
+// Предполагается что пользователя подписки изменить нельзя
+type ReplaceSubscriptionRequest struct {
+	ServiceName string `json:"service_name" validate:"required"`
+	Price       int    `json:"price" validate:"required,min=0"`
+	StartDate   string `json:"start_date" validate:"required"`
+	EndDate     string `json:"end_date,omitempty"`
+}
+
+// UpdateSubscriptionRequest DTO для запроса изменения подписки (PATCH метод)
+// Предполагается что пользователя подписки изменить нельзя
 type UpdateSubscriptionRequest struct {
 	ServiceName *string `json:"service_name,omitempty"`
 	Price       *int    `json:"price,omitempty"`

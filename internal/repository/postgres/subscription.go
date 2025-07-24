@@ -44,6 +44,11 @@ func NewSubscriptionRepository(ctx context.Context, cfg config.DBConfig) *Subscr
 	return &SubscriptionRepository{pool: pool}
 }
 
+func (r *SubscriptionRepository) Close() {
+	r.pool.Close()
+	slog.Info("Disconnected from postgres database")
+}
+
 func (r *SubscriptionRepository) CreateSubscription(ctx context.Context, sub *models.Subscription) error {
 	query := `INSERT INTO subscriptions (service_name, price, user_id, start_date, end_date)
                   VALUES ($1, $2, $3, $4, $5) RETURNING id`

@@ -1,10 +1,10 @@
 package config
 
 import (
+	"fmt"
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/joho/godotenv"
 	"log/slog"
-	"os"
 )
 
 type Config struct {
@@ -19,18 +19,16 @@ type DBConfig struct {
 	Name string `env:"DB_NAME" env-required:"true"`
 }
 
-func Load() *Config {
+func Load() (Config, error) {
 	if err := godotenv.Load(".env"); err != nil {
-		slog.Error("Error loading .env file", "error", err)
-		os.Exit(1)
+		return Config{}, fmt.Errorf("failed to load .env: %w", err)
 	}
 
-	cfg := &Config{}
+	cfg := Config{}
 	if err := cleanenv.ReadEnv(cfg); err != nil {
-		slog.Error("Error reading env to config", err)
-		os.Exit(1)
+		return Config{}, fmt.Errorf("failed to read env: %w", err)
 	}
 
 	slog.Info("Environment variables loaded")
-	return cfg
+	return cfg, nil
 }

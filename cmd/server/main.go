@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/internal/config"
-	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/internal/models"
+	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/internal/repository"
 	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/internal/repository/postgres"
 	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/pkg/logger"
 )
@@ -29,7 +29,7 @@ func main() {
 	}
 	defer db.Close()
 
-	id, err := db.CreateSubscription(context.Background(), models.Subscription{
+	id, err := db.CreateSubscription(context.Background(), repository.Subscription{
 		ServiceName: "test service",
 		Price:       123,
 		UserID:      uuid.UUID{},

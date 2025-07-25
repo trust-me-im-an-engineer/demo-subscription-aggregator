@@ -6,7 +6,6 @@ import (
 	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/pkg/monthyear"
 )
 
-// CreateSubscriptionRequest DTO для запроса создания подписки
 type CreateSubscriptionRequest struct {
 	ServiceName string               `json:"service_name" validate:"required"`
 	Price       int                  `json:"price" validate:"required,min=0"`
@@ -15,7 +14,6 @@ type CreateSubscriptionRequest struct {
 	EndDate     *monthyear.MonthYear `json:"end_date,omitempty"`
 }
 
-// ReplaceSubscriptionRequest DTO для запроса замены подписки (PUT метод)
 // Предполагается что пользователя подписки изменить нельзя
 type ReplaceSubscriptionRequest struct {
 	ServiceName string              `json:"service_name" validate:"required"`
@@ -24,7 +22,6 @@ type ReplaceSubscriptionRequest struct {
 	EndDate     monthyear.MonthYear `json:"end_date,omitempty"`
 }
 
-// UpdateSubscriptionRequest DTO для запроса изменения подписки (PATCH метод)
 // Предполагается что пользователя подписки изменить нельзя
 type UpdateSubscriptionRequest struct {
 	ServiceName *string              `json:"service_name,omitempty"`
@@ -33,7 +30,6 @@ type UpdateSubscriptionRequest struct {
 	EndDate     *monthyear.MonthYear `json:"end_date,omitempty"`
 }
 
-// TotalCostRequest DTO для запроса суммарной стоимости
 type TotalCostRequest struct {
 	UserID      *uuid.UUID           `query:"user_id"`
 	ServiceName *string              `query:"service_name"`
@@ -50,7 +46,6 @@ type SubscriptionResponse struct {
 	EndDate     *monthyear.MonthYear `json:"end_date"`
 }
 
-// TotalCostResponse DTO для ответа суммарной стоимости
 type TotalCostResponse struct {
 	TotalCost int `json:"total_cost"`
 }

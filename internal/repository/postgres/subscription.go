@@ -43,7 +43,7 @@ func (r *SubscriptionRepository) Close() {
 	slog.Info("disconnected from postgres database")
 }
 
-func (r *SubscriptionRepository) CreateSubscription(ctx context.Context, sub models.Subscription) (uuid.UUID, error) {
+func (r *SubscriptionRepository) CreateSubscription(ctx context.Context, sub repository.Subscription) (uuid.UUID, error) {
 	query := `INSERT INTO subscriptions (service_name, price, user_id, start_date, end_date)
                   VALUES ($1, $2, $3, $4, $5) RETURNING id`
 	var id uuid.UUID
@@ -56,28 +56,28 @@ func (r *SubscriptionRepository) CreateSubscription(ctx context.Context, sub mod
 	return id, nil
 }
 
-func (r *SubscriptionRepository) GetSubscriptionByID(ctx context.Context, id uuid.UUID) (models.Subscription, error) {
+func (r *SubscriptionRepository) GetSubscriptionByID(ctx context.Context, id uuid.UUID) (repository.Subscription, error) {
 	query := `SELECT id, service_name, price, user_id, start_date, end_date FROM subscriptions WHERE id = $1`
-	sub := models.Subscription{}
+	sub := repository.Subscription{}
 	err := r.pool.QueryRow(ctx, query, id).Scan(&sub.ID, &sub.ServiceName, &sub.Price, &sub.UserID, &sub.StartDate, &sub.EndDate)
 	if err != nil {
-		return models.Subscription{}, fmt.Errorf("failed to get subscription: %w", err)
+		return repository.Subscription{}, fmt.Errorf("failed to get subscription: %w", err)
 	}
 
 	slog.Debug("subscription found", "subscription", sub)
 	return sub, nil
 }
 
-func (r *SubscriptionRepository) GetAllSubscriptions(ctx context.Context) ([]models.Subscription, error) {
+func (r *SubscriptionRepository) GetAllSubscriptions(ctx context.Context) ([]repository.Subscription, error) {
 	query := `SELECT id, service_name, price, user_id, start_date, end_date FROM subscriptions`
 	rows, err := r.pool.Query(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get all subscriptions: %w", err)
 	}
 
-	subs := make([]models.Subscription, 0)
+	subs := make([]repository.Subscription, 0)
 	for rows.Next() {
-		var sub models.Subscription
+		var sub repository.Subscription
 		err := rows.Scan(&sub.ID, &sub.ServiceName, &sub.Price, &sub.UserID, &sub.StartDate, &sub.EndDate)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get all subscriptions: %w", err)
@@ -93,16 +93,21 @@ func (r *SubscriptionRepository) GetAllSubscriptions(ctx context.Context) ([]mod
 }
 
 func (r *SubscriptionRepository) DeleteSubscription(ctx context.Context, id uuid.UUID) error {
+	query := `DELETE FROM subscriptions WHERE id = $1`
+	_, err := r.pool.Exec(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("failed to delete subscription: %w", err)
+	}
+	slog.Debug("subscription deleted", "id", id)
+	return nil
+}
+
+func (r *SubscriptionRepository) ReplaceSubscription(ctx context.Context, id uuid.UUID, sub models.ReplaceSubscriptionRequest) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (r *SubscriptionRepository) ReplaceSubscription(ctx context.Context, sub models.ReplaceSubscriptionRequest) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (r *SubscriptionRepository) UpdateSubscription(ctx context.Context, sub models.UpdateSubscriptionRequest) error {
+func (r *SubscriptionRepository) UpdateSubscription(ctx context.Context, id uuid.UUID, sub models.UpdateSubscriptionRequest) error {
 	//TODO implement me
 	panic("implement me")
 }

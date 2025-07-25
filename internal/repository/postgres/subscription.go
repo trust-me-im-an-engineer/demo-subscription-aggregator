@@ -101,7 +101,7 @@ func (r *SubscriptionRepository) DeleteSubscription(ctx context.Context, id uuid
 	return nil
 }
 
-func (r *SubscriptionRepository) UpdateSubscription(ctx context.Context, id uuid.UUID, sub repository.Subscription) error {
+func (r *SubscriptionRepository) UpdateSubscription(ctx context.Context, sub repository.Subscription) error {
 	//TODO implement me
 	panic("implement me")
 }

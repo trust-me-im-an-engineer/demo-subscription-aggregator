@@ -28,7 +28,7 @@ type SubscriptionRepository interface {
 	CreateSubscription(ctx context.Context, sub Subscription) (uuid.UUID, error)
 	GetSubscriptionByID(ctx context.Context, id uuid.UUID) (Subscription, error)
 	GetAllSubscriptions(ctx context.Context) ([]Subscription, error)
-	UpdateSubscription(ctx context.Context, id uuid.UUID, sub Subscription) error
+	UpdateSubscription(ctx context.Context, sub Subscription) error
 	DeleteSubscription(ctx context.Context, id uuid.UUID) error
 	GetTotalCostWithFilters(ctx context.Context, request SubscriptionFilter) (int, error)
 }

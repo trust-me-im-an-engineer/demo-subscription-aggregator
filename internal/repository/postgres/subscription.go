@@ -7,7 +7,6 @@ import (
 	"log/slog"
 
 	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/internal/config"
-	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/internal/models"
 	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/internal/repository"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -102,17 +101,12 @@ func (r *SubscriptionRepository) DeleteSubscription(ctx context.Context, id uuid
 	return nil
 }
 
-func (r *SubscriptionRepository) ReplaceSubscription(ctx context.Context, id uuid.UUID, sub models.ReplaceSubscriptionRequest) error {
+func (r *SubscriptionRepository) UpdateSubscription(ctx context.Context, id uuid.UUID, sub repository.Subscription) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (r *SubscriptionRepository) UpdateSubscription(ctx context.Context, id uuid.UUID, sub models.UpdateSubscriptionRequest) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (r *SubscriptionRepository) GetTotalCostWithFilters(ctx context.Context, request models.TotalCostRequest) (int, error) {
+func (r *SubscriptionRepository) GetTotalCostWithFilters(ctx context.Context, request repository.SubscriptionFilter) (int, error) {
 	//TODO implement me
 	panic("implement me")
 }

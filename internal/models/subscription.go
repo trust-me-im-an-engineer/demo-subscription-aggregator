@@ -14,19 +14,10 @@ type CreateSubscriptionRequest struct {
 	EndDate     *monthyear.MonthYear `json:"end_date,omitempty"`
 }
 
-// Предполагается что пользователя подписки изменить нельзя
-type ReplaceSubscriptionRequest struct {
-	ServiceName string              `json:"service_name" validate:"required"`
-	Price       int                 `json:"price" validate:"required,min=0"`
-	StartDate   monthyear.MonthYear `json:"start_date" validate:"required"`
-	EndDate     monthyear.MonthYear `json:"end_date,omitempty"`
-}
-
-// Предполагается что пользователя подписки изменить нельзя
+// Предполагается что пользователя и дату начала изменить нельзя
 type UpdateSubscriptionRequest struct {
 	ServiceName *string              `json:"service_name,omitempty"`
 	Price       *int                 `json:"price,omitempty"`
-	StartDate   *monthyear.MonthYear `json:"start_date,omitempty"`
 	EndDate     *monthyear.MonthYear `json:"end_date,omitempty"`
 }
 

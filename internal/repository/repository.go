@@ -5,8 +5,6 @@ import (
 	"database/sql"
 	"github.com/google/uuid"
 	"time"
-
-	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/internal/models"
 )
 
 // Subscription представляет подписку в базе данных
@@ -19,12 +17,18 @@ type Subscription struct {
 	EndDate     sql.NullTime `db:"end_date"`
 }
 
+type SubscriptionFilter struct {
+	UserID      *uuid.UUID
+	ServiceName *string
+	StartDate   *time.Time
+	EndDate     *time.Time
+}
+
 type SubscriptionRepository interface {
 	CreateSubscription(ctx context.Context, sub Subscription) (uuid.UUID, error)
 	GetSubscriptionByID(ctx context.Context, id uuid.UUID) (Subscription, error)
 	GetAllSubscriptions(ctx context.Context) ([]Subscription, error)
-	ReplaceSubscription(ctx context.Context, id uuid.UUID, sub models.ReplaceSubscriptionRequest) error
-	UpdateSubscription(ctx context.Context, id uuid.UUID, sub models.UpdateSubscriptionRequest) error
+	UpdateSubscription(ctx context.Context, id uuid.UUID, sub Subscription) error
 	DeleteSubscription(ctx context.Context, id uuid.UUID) error
-	GetTotalCostWithFilters(ctx context.Context, request models.TotalCostRequest) (int, error)
+	GetTotalCostWithFilters(ctx context.Context, request SubscriptionFilter) (int, error)
 }

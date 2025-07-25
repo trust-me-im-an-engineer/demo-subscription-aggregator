@@ -102,11 +102,46 @@ func (r *SubscriptionRepository) DeleteSubscription(ctx context.Context, id uuid
 }
 
 func (r *SubscriptionRepository) UpdateSubscription(ctx context.Context, sub repository.Subscription) error {
-	//TODO implement me
-	panic("implement me")
+	query := `UPDATE subscriptions SET service_name = $1, price = $2, user_id = $3, start_date = $4, end_date = $5 WHERE id = $6`
+	_, err := r.pool.Exec(ctx, query, sub.ServiceName, sub.Price, sub.UserID, sub.StartDate, sub.EndDate, sub.ID)
+	if err != nil {
+		return fmt.Errorf("failed to update subscription: %w", err)
+	}
+	slog.Debug("subscription updated", "id", sub.ID)
+	return nil
 }
 
-func (r *SubscriptionRepository) GetTotalCostWithFilters(ctx context.Context, request repository.SubscriptionFilter) (int, error) {
-	//TODO implement me
-	panic("implement me")
+func (r *SubscriptionRepository) GetTotalCostWithFilters(ctx context.Context, filter repository.SubscriptionFilter) (int, error) {
+	query := `SELECT SUM(price) FROM subscriptions WHERE 1 = 1`
+	args := make([]any, 0, 1)
+	argID := 1
+
+	if filter.UserID != nil {
+		query += fmt.Sprintf(" AND user_id = $%d", argID)
+		args = append(args, *filter.UserID)
+		argID++
+	}
+	if filter.ServiceName != nil {
+		query += fmt.Sprintf(" AND service_name ILIKE $%d", argID)
+		args = append(args, "%"+*filter.ServiceName+"%")
+		argID++
+	}
+	if filter.StartDate != nil {
+		query += fmt.Sprintf(" AND start_date >= $%d", argID)
+		args = append(args, *filter.StartDate)
+		argID++
+	}
+	if filter.EndDate != nil {
+		query += fmt.Sprintf(" AND end_date <= $%d", argID)
+		args = append(args, *filter.EndDate)
+	}
+
+	var totalCost int
+	err := r.pool.QueryRow(ctx, query, args...).Scan(&totalCost)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get total cost with filters: %w", err)
+	}
+
+	slog.Debug("total cost with filters calculated", "total_cost", totalCost, "filter", filter)
+	return totalCost, nil
 }

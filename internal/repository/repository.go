@@ -8,11 +8,11 @@ import (
 )
 
 type SubscriptionRepository interface {
-	CreateSubscription(ctx context.Context, sub *models.Subscription) error
-	GetSubscriptionByID(ctx context.Context, id uuid.UUID) (*models.Subscription, error)
+	CreateSubscription(ctx context.Context, sub models.Subscription) (uuid.UUID, error)
+	GetSubscriptionByID(ctx context.Context, id uuid.UUID) (models.Subscription, error)
 	GetAllSubscriptions(ctx context.Context) ([]models.Subscription, error)
-	ReplaceSubscription(ctx context.Context, sub *models.ReplaceSubscriptionRequest) error
-	UpdateSubscription(ctx context.Context, sub *models.UpdateSubscriptionRequest) error
+	ReplaceSubscription(ctx context.Context, sub models.ReplaceSubscriptionRequest) error
+	UpdateSubscription(ctx context.Context, sub models.UpdateSubscriptionRequest) error
 	DeleteSubscription(ctx context.Context, id uuid.UUID) error
-	GetTotalCostWithFilters(ctx context.Context, request *models.TotalCostRequest) (int, error)
+	GetTotalCostWithFilters(ctx context.Context, request models.TotalCostRequest) (int, error)
 }

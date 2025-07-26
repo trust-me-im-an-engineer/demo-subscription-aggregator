@@ -48,7 +48,7 @@ func (r *SubscriptionRepository) CreateSubscription(ctx context.Context, sub rep
 	var id uuid.UUID
 	err := r.pool.QueryRow(ctx, query, sub.ServiceName, sub.Price, sub.UserID, sub.StartDate, sub.EndDate).Scan(&id)
 	if err != nil {
-		return id, fmt.Errorf("failed to create subscription: %w", err)
+		return id, err
 	}
 
 	slog.Debug("subscription created", "id", id.String(), "user_id", sub.UserID)
@@ -60,18 +60,17 @@ func (r *SubscriptionRepository) GetSubscriptionByID(ctx context.Context, id uui
 	sub := repository.Subscription{}
 	err := r.pool.QueryRow(ctx, query, id).Scan(&sub.ID, &sub.ServiceName, &sub.Price, &sub.UserID, &sub.StartDate, &sub.EndDate)
 	if err != nil {
-		return repository.Subscription{}, fmt.Errorf("failed to get subscription: %w", err)
+		return repository.Subscription{}, err
 	}
 
 	slog.Debug("subscription found", "subscription", sub)
 	return sub, nil
 }
-
 func (r *SubscriptionRepository) GetAllSubscriptions(ctx context.Context) ([]repository.Subscription, error) {
 	query := `SELECT id, service_name, price, user_id, start_date, end_date FROM subscriptions`
 	rows, err := r.pool.Query(ctx, query)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get all subscriptions: %w", err)
+		return nil, fmt.Errorf("failed to query subscriptions: %w", err)
 	}
 
 	subs := make([]repository.Subscription, 0)
@@ -79,15 +78,16 @@ func (r *SubscriptionRepository) GetAllSubscriptions(ctx context.Context) ([]rep
 		var sub repository.Subscription
 		err := rows.Scan(&sub.ID, &sub.ServiceName, &sub.Price, &sub.UserID, &sub.StartDate, &sub.EndDate)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get all subscriptions: %w", err)
+			return nil, fmt.Errorf("failed to scan subscription: %w", err)
 		}
 		subs = append(subs, sub)
 	}
+
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("failed to get all subscriptions: %w", err)
+		return nil, fmt.Errorf("failed to scan all subscriptions: %w", err)
 	}
 
-	slog.Debug("all subscriptions fetched")
+	slog.Debug("all subscriptions fetched", "total", len(subs))
 	return subs, nil
 }
 
@@ -105,7 +105,7 @@ func (r *SubscriptionRepository) UpdateSubscription(ctx context.Context, sub rep
 	query := `UPDATE subscriptions SET service_name = $1, price = $2, user_id = $3, start_date = $4, end_date = $5 WHERE id = $6`
 	_, err := r.pool.Exec(ctx, query, sub.ServiceName, sub.Price, sub.UserID, sub.StartDate, sub.EndDate, sub.ID)
 	if err != nil {
-		return fmt.Errorf("failed to update subscription: %w", err)
+		return err
 	}
 	slog.Debug("subscription updated", "id", sub.ID)
 	return nil
@@ -139,7 +139,7 @@ func (r *SubscriptionRepository) GetTotalCostWithFilters(ctx context.Context, fi
 	var totalCost int
 	err := r.pool.QueryRow(ctx, query, args...).Scan(&totalCost)
 	if err != nil {
-		return 0, fmt.Errorf("failed to get total cost with filters: %w", err)
+		return 0, err
 	}
 
 	slog.Debug("total cost with filters calculated", "total_cost", totalCost, "filter", filter)

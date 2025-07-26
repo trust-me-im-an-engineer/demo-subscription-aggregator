@@ -18,8 +18,8 @@ type Subscription struct {
 }
 
 type SubscriptionFilter struct {
-	UserID      *uuid.UUID
 	ServiceName *string
+	UserID      *uuid.UUID
 	StartDate   *time.Time
 	EndDate     *time.Time
 }

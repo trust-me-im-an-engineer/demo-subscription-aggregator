@@ -143,11 +143,31 @@ func (s Service) UpdateSubscription(ctx context.Context, id uuid.UUID, req model
 }
 
 func (s Service) DeleteSubscription(ctx context.Context, id uuid.UUID) error {
-	//TODO implement me
-	panic("implement me")
+	return s.repo.DeleteSubscription(ctx, id)
 }
 
-func (s Service) GetTotalCost(ctx context.Context, filter models.TotalCostRequest) (models.TotalCostResponse, error) {
-	//TODO implement me
-	panic("implement me")
+func (s Service) GetTotalCost(ctx context.Context, req models.TotalCostRequest) (models.TotalCostResponse, error) {
+	filter := repository.SubscriptionFilter{}
+
+	if req.UserID != nil {
+		filter.UserID = req.UserID
+	}
+	if req.ServiceName != nil {
+		filter.ServiceName = req.ServiceName
+	}
+	if req.StartDate != nil {
+		startDate := time.Time(*req.StartDate)
+		filter.StartDate = &startDate
+	}
+	if req.EndDate != nil {
+		endDate := time.Time(*req.EndDate)
+		filter.EndDate = &endDate
+	}
+
+	totalCost, err := s.repo.GetTotalCostWithFilters(ctx, filter)
+	if err != nil {
+		return models.TotalCostResponse{}, fmt.Errorf("repo failed to get total cost: %w", err)
+	}
+
+	return models.TotalCostResponse{TotalCost: totalCost}, nil
 }

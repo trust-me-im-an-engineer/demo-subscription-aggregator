@@ -77,8 +77,26 @@ func (s Service) GetSubscriptionByID(ctx context.Context, id uuid.UUID) (models.
 }
 
 func (s Service) GetAllSubscriptions(ctx context.Context) ([]models.SubscriptionResponse, error) {
-	//TODO implement me
-	panic("implement me")
+	subs, err := s.repo.GetAllSubscriptions(ctx)
+	if err != nil {
+		return []models.SubscriptionResponse{}, fmt.Errorf("repo failed to get all subcsciptions: %w", err)
+	}
+	responds := make([]models.SubscriptionResponse, len(subs))
+	for i, sub := range subs {
+		responds[i] = models.SubscriptionResponse{
+			ID:          sub.ID,
+			ServiceName: sub.ServiceName,
+			Price:       sub.Price,
+			UserID:      sub.UserID,
+			StartDate:   monthyear.MonthYear(sub.StartDate),
+		}
+		if sub.EndDate.Valid {
+			endDate := monthyear.MonthYear(sub.EndDate.Time)
+			responds[i].EndDate = &endDate
+		}
+	}
+
+	return responds, nil
 }
 
 func (s Service) UpdateSubscription(ctx context.Context, id uuid.UUID, req models.UpdateSubscriptionRequest) (models.SubscriptionResponse, error) {

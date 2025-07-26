@@ -24,11 +24,17 @@ type SubscriptionFilter struct {
 	EndDate     *time.Time
 }
 
+type ErrSubscriptionNotFound struct{}
+
+func (e *ErrSubscriptionNotFound) Error() string {
+	return "subscription not found"
+}
+
 type SubscriptionRepository interface {
 	CreateSubscription(ctx context.Context, sub Subscription) (uuid.UUID, error)
 	GetSubscriptionByID(ctx context.Context, id uuid.UUID) (Subscription, error)
 	GetAllSubscriptions(ctx context.Context) ([]Subscription, error)
-	UpdateSubscription(ctx context.Context, sub Subscription) error
+	UpdateSubscription(ctx context.Context, sub Subscription) (Subscription, error)
 	DeleteSubscription(ctx context.Context, id uuid.UUID) error
 	GetTotalCostWithFilters(ctx context.Context, filter SubscriptionFilter) (int, error)
 }

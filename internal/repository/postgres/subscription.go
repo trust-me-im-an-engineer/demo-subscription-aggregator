@@ -2,8 +2,10 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"log/slog"
 
 	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/internal/config"
@@ -60,12 +62,16 @@ func (r *SubscriptionRepository) GetSubscriptionByID(ctx context.Context, id uui
 	sub := repository.Subscription{}
 	err := r.pool.QueryRow(ctx, query, id).Scan(&sub.ID, &sub.ServiceName, &sub.Price, &sub.UserID, &sub.StartDate, &sub.EndDate)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return repository.Subscription{}, &repository.ErrSubscriptionNotFound{}
+		}
 		return repository.Subscription{}, err
 	}
 
 	slog.Debug("subscription found", "subscription", sub)
 	return sub, nil
 }
+
 func (r *SubscriptionRepository) GetAllSubscriptions(ctx context.Context) ([]repository.Subscription, error) {
 	query := `SELECT id, service_name, price, user_id, start_date, end_date FROM subscriptions`
 	rows, err := r.pool.Query(ctx, query)
@@ -95,20 +101,36 @@ func (r *SubscriptionRepository) DeleteSubscription(ctx context.Context, id uuid
 	query := `DELETE FROM subscriptions WHERE id = $1`
 	_, err := r.pool.Exec(ctx, query, id)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return &repository.ErrSubscriptionNotFound{}
+		}
 		return fmt.Errorf("failed to delete subscription: %w", err)
 	}
 	slog.Debug("subscription deleted", "id", id)
 	return nil
 }
+func (r *SubscriptionRepository) UpdateSubscription(ctx context.Context, sub repository.Subscription) (repository.Subscription, error) {
+	query := `UPDATE subscriptions SET service_name = $1, price = $2, user_id = $3, start_date = $4, end_date = $5 WHERE id = $6
+              RETURNING id, service_name, price, user_id, start_date, end_date`
+	var updatedSub repository.Subscription
+	err := r.pool.QueryRow(ctx, query, sub.ServiceName, sub.Price, sub.UserID, sub.StartDate, sub.EndDate, sub.ID).Scan(
+		&updatedSub.ID,
+		&updatedSub.ServiceName,
+		&updatedSub.Price,
+		&updatedSub.UserID,
+		&updatedSub.StartDate,
+		&updatedSub.EndDate,
+	)
 
-func (r *SubscriptionRepository) UpdateSubscription(ctx context.Context, sub repository.Subscription) error {
-	query := `UPDATE subscriptions SET service_name = $1, price = $2, user_id = $3, start_date = $4, end_date = $5 WHERE id = $6`
-	_, err := r.pool.Exec(ctx, query, sub.ServiceName, sub.Price, sub.UserID, sub.StartDate, sub.EndDate, sub.ID)
 	if err != nil {
-		return err
+		if errors.Is(err, pgx.ErrNoRows) {
+			return repository.Subscription{}, &repository.ErrSubscriptionNotFound{}
+		}
+		return repository.Subscription{}, fmt.Errorf("failed to update or retrieve subscription: %w", err)
 	}
-	slog.Debug("subscription updated", "id", sub.ID)
-	return nil
+
+	slog.Debug("subscription updated", "subscription", updatedSub)
+	return updatedSub, nil
 }
 
 func (r *SubscriptionRepository) GetTotalCostWithFilters(ctx context.Context, filter repository.SubscriptionFilter) (int, error) {

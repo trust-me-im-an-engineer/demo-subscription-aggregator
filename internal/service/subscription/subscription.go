@@ -100,8 +100,46 @@ func (s Service) GetAllSubscriptions(ctx context.Context) ([]models.Subscription
 }
 
 func (s Service) UpdateSubscription(ctx context.Context, id uuid.UUID, req models.UpdateSubscriptionRequest) (models.SubscriptionResponse, error) {
-	//TODO implement me
-	panic("implement me")
+	sub, err := s.repo.GetSubscriptionByID(ctx, id)
+	if err != nil {
+		return models.SubscriptionResponse{}, err
+	}
+
+	if req.ServiceName != nil {
+		sub.ServiceName = *req.ServiceName
+	}
+	if req.Price != nil {
+		sub.Price = *req.Price
+	}
+	if req.EndDate != nil {
+		endDate := time.Time(*req.EndDate)
+		if endDate.Before(sub.StartDate) {
+			return models.SubscriptionResponse{}, &service.ErrInvalidDateRange{}
+		}
+		sub.EndDate = sql.NullTime{
+			Time:  endDate,
+			Valid: true,
+		}
+	}
+
+	updatedSub, err := s.repo.UpdateSubscription(ctx, sub)
+	if err != nil {
+		return models.SubscriptionResponse{}, fmt.Errorf("repo failed to update subcsciption: %w", err)
+	}
+
+	resp := models.SubscriptionResponse{
+		ID:          updatedSub.ID,
+		ServiceName: updatedSub.ServiceName,
+		Price:       updatedSub.Price,
+		UserID:      updatedSub.UserID,
+		StartDate:   monthyear.MonthYear(updatedSub.StartDate),
+	}
+	if updatedSub.EndDate.Valid {
+		endDate := monthyear.MonthYear(updatedSub.EndDate.Time)
+		resp.EndDate = &endDate
+	}
+
+	return resp, nil
 }
 
 func (s Service) DeleteSubscription(ctx context.Context, id uuid.UUID) error {

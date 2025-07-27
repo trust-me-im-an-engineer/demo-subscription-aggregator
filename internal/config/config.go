@@ -25,7 +25,7 @@ func Load() (Config, error) {
 	}
 
 	cfg := Config{}
-	if err := cleanenv.ReadEnv(cfg); err != nil {
+	if err := cleanenv.ReadEnv(&cfg); err != nil {
 		return Config{}, fmt.Errorf("failed to read env: %w", err)
 	}
 

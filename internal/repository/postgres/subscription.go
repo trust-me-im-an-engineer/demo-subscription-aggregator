@@ -55,7 +55,7 @@ func (r *SubscriptionRepository) CreateSubscription(ctx context.Context, sub rep
 		if errors.As(err, &pgxError) {
 			// Unique constrain failed
 			if pgxError.Code == "23505" {
-				return id, &repository.ErrSubscriptionAlreadyExists{}
+				return id, repository.ErrSubscriptionAlreadyExists
 			}
 		}
 		return id, err
@@ -71,7 +71,7 @@ func (r *SubscriptionRepository) GetSubscriptionByID(ctx context.Context, id uui
 	err := r.pool.QueryRow(ctx, query, id).Scan(&sub.ID, &sub.ServiceName, &sub.Price, &sub.UserID, &sub.StartDate, &sub.EndDate)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return repository.Subscription{}, &repository.ErrSubscriptionNotFound{}
+			return repository.Subscription{}, repository.ErrSubscriptionNotFound
 		}
 		return repository.Subscription{}, err
 	}
@@ -110,7 +110,7 @@ func (r *SubscriptionRepository) DeleteSubscription(ctx context.Context, id uuid
 	_, err := r.pool.Exec(ctx, query, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &repository.ErrSubscriptionNotFound{}
+			return repository.ErrSubscriptionNotFound
 		}
 		return fmt.Errorf("failed to delete subscription: %w", err)
 	}
@@ -132,13 +132,13 @@ func (r *SubscriptionRepository) UpdateSubscription(ctx context.Context, sub rep
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return repository.Subscription{}, &repository.ErrSubscriptionNotFound{}
+			return repository.Subscription{}, repository.ErrSubscriptionNotFound
 		}
 		var pgxError *pgconn.PgError
 		if errors.As(err, &pgxError) {
 			// Unique constrain failed
 			if pgxError.Code == "23505" {
-				return repository.Subscription{}, &repository.ErrSubscriptionAlreadyExists{}
+				return repository.Subscription{}, repository.ErrSubscriptionAlreadyExists
 			}
 		}
 		return repository.Subscription{}, fmt.Errorf("failed to update or retrieve subscription: %w", err)

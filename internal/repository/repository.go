@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"github.com/google/uuid"
 	"time"
 )
@@ -24,17 +25,10 @@ type SubscriptionFilter struct {
 	EndDate     *time.Time
 }
 
-type ErrSubscriptionNotFound struct{}
-
-type ErrSubscriptionAlreadyExists struct{}
-
-func (e *ErrSubscriptionNotFound) Error() string {
-	return "subscription not found"
-}
-
-func (e *ErrSubscriptionAlreadyExists) Error() string {
-	return "subscription already exists"
-}
+var (
+	ErrSubscriptionNotFound      = errors.New("subscription not found")
+	ErrSubscriptionAlreadyExists = errors.New("subscription already exists")
+)
 
 type SubscriptionRepository interface {
 	CreateSubscription(ctx context.Context, sub Subscription) (uuid.UUID, error)

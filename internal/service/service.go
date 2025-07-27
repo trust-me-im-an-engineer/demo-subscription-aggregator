@@ -2,16 +2,13 @@ package service
 
 import (
 	"context"
+	"errors"
 	"github.com/google/uuid"
 
 	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/internal/models"
 )
 
-type ErrInvalidDateRange struct{}
-
-func (e *ErrInvalidDateRange) Error() string {
-	return "end date cannot be before start date"
-}
+var ErrInvalidDateRange = errors.New("end date cannot be before start date")
 
 type SubscriptionService interface {
 	CreateSubscription(ctx context.Context, req models.CreateSubscriptionRequest) (models.SubscriptionResponse, error)

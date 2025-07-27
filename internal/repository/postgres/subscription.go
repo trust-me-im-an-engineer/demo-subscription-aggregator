@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"log/slog"
 
 	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/internal/config"
@@ -50,6 +51,13 @@ func (r *SubscriptionRepository) CreateSubscription(ctx context.Context, sub rep
 	var id uuid.UUID
 	err := r.pool.QueryRow(ctx, query, sub.ServiceName, sub.Price, sub.UserID, sub.StartDate, sub.EndDate).Scan(&id)
 	if err != nil {
+		var pgxError *pgconn.PgError
+		if errors.As(err, &pgxError) {
+			// Unique constrain failed
+			if pgxError.Code == "23505" {
+				return id, &repository.ErrSubscriptionAlreadyExists{}
+			}
+		}
 		return id, err
 	}
 
@@ -125,6 +133,13 @@ func (r *SubscriptionRepository) UpdateSubscription(ctx context.Context, sub rep
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return repository.Subscription{}, &repository.ErrSubscriptionNotFound{}
+		}
+		var pgxError *pgconn.PgError
+		if errors.As(err, &pgxError) {
+			// Unique constrain failed
+			if pgxError.Code == "23505" {
+				return repository.Subscription{}, &repository.ErrSubscriptionAlreadyExists{}
+			}
 		}
 		return repository.Subscription{}, fmt.Errorf("failed to update or retrieve subscription: %w", err)
 	}

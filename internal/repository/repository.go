@@ -26,8 +26,14 @@ type SubscriptionFilter struct {
 
 type ErrSubscriptionNotFound struct{}
 
+type ErrSubscriptionAlreadyExists struct{}
+
 func (e *ErrSubscriptionNotFound) Error() string {
 	return "subscription not found"
+}
+
+func (e *ErrSubscriptionAlreadyExists) Error() string {
+	return "subscription already exists"
 }
 
 type SubscriptionRepository interface {

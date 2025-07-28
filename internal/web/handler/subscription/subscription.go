@@ -59,7 +59,6 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
-	// Extract subscription ID from URL path or query parameter
 	subscriptionIDStr := r.URL.Query().Get("id")
 	if subscriptionIDStr == "" {
 		http.Error(w, "subscription ID is required", http.StatusBadRequest)
@@ -75,7 +74,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	var req models.UpdateSubscriptionRequest
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
+		http.Error(w, "invalid JSON format", http.StatusBadRequest)
 		return
 	}
 
@@ -112,6 +111,8 @@ func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetTotalCost(w http.ResponseWriter, r *http.Request) {
+	// Don't bother adding custom converters for uuid and monthyear to use tag parsing just in one place,
+	// so parse it manually
 	req, err := h.parseTotalCostRequest(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

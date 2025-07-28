@@ -55,7 +55,7 @@ func main() {
 	router := web.NewRouter(service)
 
 	server := &http.Server{
-		Addr:    cfg.App.Port,
+		Addr:    cfg.App.Address,
 		Handler: router,
 	}
 
@@ -65,7 +65,7 @@ func main() {
 
 	// Start server in a goroutine
 	go func() {
-		slog.Info("starting server", "port", cfg.App.Port)
+		slog.Info("starting server", "port", cfg.App.Address)
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			slog.Error("server error", "error", err)
 			os.Exit(1)

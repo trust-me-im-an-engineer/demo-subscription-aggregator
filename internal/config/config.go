@@ -14,7 +14,7 @@ type Config struct {
 }
 
 type AppConfig struct {
-	Port            string        `yaml:"port"`
+	Address         string        `yaml:"address"`
 	ShutdownTimeout time.Duration `yaml:"shutdown_timeout"`
 }
 
@@ -34,10 +34,14 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("failed to read config.yaml: %w", err)
 	}
 
-	if err := yaml.Unmarshal(data, &cfg); err != nil {
+	// Expand environment variables
+	expanded := os.ExpandEnv(string(data))
+
+	if err := yaml.Unmarshal([]byte(expanded), &cfg); err != nil {
 		return Config{}, fmt.Errorf("failed to parse config.yaml: %w", err)
 	}
 
-	slog.Info("configuration loaded from config.yaml")
+	slog.Debug("configuration loaded", "config", cfg)
+
 	return cfg, nil
 }

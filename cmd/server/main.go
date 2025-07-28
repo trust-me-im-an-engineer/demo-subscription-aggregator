@@ -36,13 +36,13 @@ import (
 // @schemes http https
 
 func main() {
-	logger.Init()
-
 	cfg, err := config.Load()
 	if err != nil {
 		slog.Error("failed to load config", "error", err)
 		os.Exit(1)
 	}
+
+	logger.Init(cfg.App.LogLevel)
 
 	db, err := postgres.New(context.Background(), cfg.DB)
 	if err != nil {

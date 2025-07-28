@@ -5,9 +5,9 @@ import (
 	"os"
 )
 
-func Init() {
+func Init(level slog.Level) {
 	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
+		Level: level,
 	})
 
 	lgr := slog.New(handler)

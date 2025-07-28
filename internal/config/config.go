@@ -14,6 +14,7 @@ type Config struct {
 
 type AppConfig struct {
 	Address         string        `env:"APP_ADDRESS" envDefault:"0.0.0.0:8080"`
+	LogLevel        slog.Level    `env:"APP_LOG_LEVEL" envDefault:"INFO"`
 	ShutdownTimeout time.Duration `env:"APP_SHUTDOWN_TIMEOUT" envDefault:"10s"`
 }
 
@@ -31,8 +32,6 @@ func Load() (Config, error) {
 	if err := env.Parse(&cfg); err != nil {
 		return Config{}, fmt.Errorf("failed to parse config from environment: %w", err)
 	}
-
-	slog.Debug("configuration loaded", "config", cfg)
 
 	return cfg, nil
 }

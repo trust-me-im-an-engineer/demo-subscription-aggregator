@@ -30,10 +30,6 @@ func (s Service) CreateSubscription(ctx context.Context, req models.CreateSubscr
 	}
 	if req.EndDate != nil {
 		endDate := time.Time(*req.EndDate)
-		if endDate.Before(sub.StartDate) {
-			return models.SubscriptionResponse{}, service.ErrInvalidDateRange
-		}
-
 		sub.EndDate = sql.NullTime{
 			Time:  endDate,
 			Valid: true,

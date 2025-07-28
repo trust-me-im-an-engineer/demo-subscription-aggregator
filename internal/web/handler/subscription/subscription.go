@@ -55,11 +55,11 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	resp, err := h.Service.CreateSubscription(r.Context(), req)
 	if err != nil {
 		if errors.Is(err, repository.ErrSubscriptionAlreadyExists) {
-			http.Error(w, err.Error(), http.StatusConflict)
+			http.Error(w, repository.ErrSubscriptionAlreadyExists.Error(), http.StatusConflict)
 			return
 		}
 		if errors.Is(err, service.ErrInvalidDateRange) {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, service.ErrInvalidDateRange.Error(), http.StatusBadRequest)
 			return
 		}
 		slog.Error("service failed to create subscription", "error", err)
@@ -109,7 +109,7 @@ func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
 	resp, err := h.Service.GetSubscriptionByID(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, repository.ErrSubscriptionNotFound) {
-			http.Error(w, err.Error(), http.StatusNotFound)
+			http.Error(w, repository.ErrSubscriptionNotFound.Error(), http.StatusNotFound)
 			return
 		}
 		slog.Error("service failed to get subscription", "error", err)
@@ -159,7 +159,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if errors.Is(err, service.ErrInvalidDateRange) {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, service.ErrInvalidDateRange.Error(), http.StatusBadRequest)
 			return
 		}
 		slog.Error("service failed to update subscription", "error", err)
@@ -190,7 +190,7 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	err = h.Service.DeleteSubscription(r.Context(), subscriptionID)
 	if err != nil {
 		if errors.Is(err, repository.ErrSubscriptionNotFound) {
-			http.Error(w, err.Error(), http.StatusNotFound)
+			http.Error(w, repository.ErrSubscriptionNotFound.Error(), http.StatusNotFound)
 			return
 		}
 		slog.Error("service failed to delete subscription", "error", err)

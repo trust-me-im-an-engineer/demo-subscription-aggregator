@@ -26,7 +26,7 @@ func (s Service) CreateSubscription(ctx context.Context, req models.CreateSubscr
 		ServiceName: req.ServiceName,
 		Price:       req.Price,
 		UserID:      req.UserID,
-		StartDate:   time.Time(req.StartDate),
+		StartDate:   time.Time(*req.StartDate),
 	}
 	if req.EndDate != nil {
 		endDate := time.Time(*req.EndDate)
@@ -62,8 +62,9 @@ func (s Service) GetSubscriptionByID(ctx context.Context, id uuid.UUID) (models.
 		ServiceName: sub.ServiceName,
 		Price:       sub.Price,
 		UserID:      sub.UserID,
-		StartDate:   monthyear.MonthYear(sub.StartDate),
 	}
+	startDate := monthyear.MonthYear(sub.StartDate)
+	resp.StartDate = &startDate
 	if sub.EndDate.Valid {
 		endDate := monthyear.MonthYear(sub.EndDate.Time)
 		resp.EndDate = &endDate
@@ -84,8 +85,9 @@ func (s Service) GetAllSubscriptions(ctx context.Context) ([]models.Subscription
 			ServiceName: sub.ServiceName,
 			Price:       sub.Price,
 			UserID:      sub.UserID,
-			StartDate:   monthyear.MonthYear(sub.StartDate),
 		}
+		startDate := monthyear.MonthYear(sub.StartDate)
+		responds[i].StartDate = &startDate
 		if sub.EndDate.Valid {
 			endDate := monthyear.MonthYear(sub.EndDate.Time)
 			responds[i].EndDate = &endDate
@@ -128,8 +130,9 @@ func (s Service) UpdateSubscription(ctx context.Context, id uuid.UUID, req model
 		ServiceName: updatedSub.ServiceName,
 		Price:       updatedSub.Price,
 		UserID:      updatedSub.UserID,
-		StartDate:   monthyear.MonthYear(updatedSub.StartDate),
 	}
+	startDate := monthyear.MonthYear(sub.StartDate)
+	resp.StartDate = &startDate
 	if updatedSub.EndDate.Valid {
 		endDate := monthyear.MonthYear(updatedSub.EndDate.Time)
 		resp.EndDate = &endDate

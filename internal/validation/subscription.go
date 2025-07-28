@@ -34,7 +34,7 @@ func (v *Validator) createSubscriptionRequest(sl validator.StructLevel) {
 
 	// Validate that end_date is after start_date if provided
 	if nil != req.EndDate {
-		startTime := time.Time(req.StartDate)
+		startTime := time.Time(*req.StartDate)
 		endTime := time.Time(*req.EndDate)
 
 		if endTime.Before(startTime) {

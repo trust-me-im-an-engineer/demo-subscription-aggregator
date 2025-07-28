@@ -1,6 +1,7 @@
 package web
 
 import (
+	httpSwagger "github.com/swaggo/http-swagger"
 	"net/http"
 
 	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/internal/service"
@@ -17,6 +18,8 @@ func NewRouter(s service.SubscriptionService) *http.ServeMux {
 	mux.HandleFunc("PUT /subscriptions/{id}", h.Update)
 	mux.HandleFunc("DELETE /subscriptions/{id}", h.Delete)
 	mux.HandleFunc("GET /subscriptions/total-cost", h.GetTotalCost)
+
+	mux.HandleFunc("GET /swagger/", httpSwagger.WrapHandler)
 
 	return mux
 }

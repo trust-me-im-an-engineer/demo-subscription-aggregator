@@ -14,7 +14,26 @@ import (
 	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/internal/service/subscription"
 	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/internal/web"
 	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/pkg/logger"
+
+	// Import generated docs
+	_ "github.com/trust-me-im-an-engineer/demo-subscription-agregator/docs"
 )
+
+// @title Subscription Aggregator API
+// @version 1.0
+// @description A service for managing user subscriptions
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+
+// @host localhost:8080
+// @BasePath /
+// @schemes http https
 
 func main() {
 	logger.Init()

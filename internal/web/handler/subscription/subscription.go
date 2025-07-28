@@ -27,6 +27,18 @@ func NewHandler(service service.SubscriptionService) Handler {
 	}
 }
 
+// Create godoc
+// @Summary Create a new subscription
+// @Description Create a new subscription for a user
+// @Tags subscriptions
+// @Accept json
+// @Produce json
+// @Param subscription body models.CreateSubscriptionRequest true "Subscription data"
+// @Success 201 {object} models.SubscriptionResponse
+// @Failure 400 {object} map[string]string "Bad request"
+// @Failure 409 {object} map[string]string "Subscription already exists"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /subscriptions [post]
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	var req models.CreateSubscriptionRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -58,6 +70,19 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	h.writeJSONResponse(w, resp, http.StatusCreated)
 }
 
+// Update godoc
+// @Summary Update a subscription
+// @Description Update an existing subscription
+// @Tags subscriptions
+// @Accept json
+// @Produce json
+// @Param id path string true "Subscription ID" format(uuid)
+// @Param subscription body models.UpdateSubscriptionRequest true "Updated subscription data"
+// @Success 200 {object} models.SubscriptionResponse
+// @Failure 400 {object} map[string]string "Bad request"
+// @Failure 404 {object} map[string]string "Subscription not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /subscriptions/{id} [put]
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	subscriptionID, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
@@ -95,6 +120,14 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	h.writeJSONResponse(w, resp, http.StatusOK)
 }
 
+// GetAll godoc
+// @Summary Get all subscriptions
+// @Description Get all subscriptions from the system
+// @Tags subscriptions
+// @Produce json
+// @Success 200 {array} models.SubscriptionResponse
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /subscriptions [get]
 func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 	resp, err := h.Service.GetAllSubscriptions(r.Context())
 	if err != nil {
@@ -104,6 +137,19 @@ func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 	h.writeJSONResponse(w, resp, http.StatusOK)
 }
 
+// GetTotalCost godoc
+// @Summary Get total cost of subscriptions
+// @Description Calculate total cost of subscriptions with optional filters
+// @Tags subscriptions
+// @Produce json
+// @Param user_id query string false "User ID" format(uuid)
+// @Param service_name query string false "Service name (partial match)"
+// @Param start_date query string false "Start date filter" format(MM-YYYY)
+// @Param end_date query string false "End date filter" format(MM-YYYY)
+// @Success 200 {object} models.TotalCostResponse
+// @Failure 400 {object} map[string]string "Bad request"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /subscriptions/total-cost [get]
 func (h *Handler) GetTotalCost(w http.ResponseWriter, r *http.Request) {
 	// Don't bother adding custom converters for uuid and monthyear to use tag parsing just in one place,
 	// so parse it manually
@@ -166,6 +212,16 @@ func (h *Handler) parseTotalCostRequest(r *http.Request) (models.TotalCostReques
 	return req, nil
 }
 
+// Delete godoc
+// @Summary Delete a subscription
+// @Description Delete a subscription by ID
+// @Tags subscriptions
+// @Param id path string true "Subscription ID" format(uuid)
+// @Success 204 "No content"
+// @Failure 400 {object} map[string]string "Bad request"
+// @Failure 404 {object} map[string]string "Subscription not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /subscriptions/{id} [delete]
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	subscriptionID, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
@@ -187,6 +243,17 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// GetByID godoc
+// @Summary Get a subscription by ID
+// @Description Get a single subscription by its ID
+// @Tags subscriptions
+// @Produce json
+// @Param id path string true "Subscription ID" format(uuid)
+// @Success 200 {object} models.SubscriptionResponse
+// @Failure 400 {object} map[string]string "Bad request"
+// @Failure 404 {object} map[string]string "Subscription not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /subscriptions/{id} [get]
 func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {

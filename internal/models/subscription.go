@@ -22,10 +22,10 @@ type UpdateSubscriptionRequest struct {
 }
 
 type TotalCostRequest struct {
-	UserID      *uuid.UUID           `query:"user_id"`
-	ServiceName *string              `query:"service_name"`
-	StartDate   *monthyear.MonthYear `query:"start_date"`
-	EndDate     *monthyear.MonthYear `query:"end_date"`
+	UserID      *uuid.UUID
+	ServiceName *string
+	StartDate   *monthyear.MonthYear
+	EndDate     *monthyear.MonthYear
 }
 
 type SubscriptionResponse struct {

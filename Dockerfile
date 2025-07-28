@@ -10,7 +10,6 @@ FROM alpine:latest
 
 WORKDIR /app
 COPY --from=builder /subscription-aggregator .
-COPY config.yaml ./config.yaml
 COPY migrations ./migrations
 
 EXPOSE 8080

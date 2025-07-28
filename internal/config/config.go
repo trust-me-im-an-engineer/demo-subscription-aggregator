@@ -2,43 +2,34 @@ package config
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v3"
+	"github.com/caarlos0/env/v6"
 	"log/slog"
-	"os"
 	"time"
 )
 
 type Config struct {
-	App AppConfig `yaml:"app"`
-	DB  DBConfig  `yaml:"db"`
+	App AppConfig
+	DB  DBConfig
 }
 
 type AppConfig struct {
-	Address         string        `yaml:"address"`
-	ShutdownTimeout time.Duration `yaml:"shutdown_timeout"`
+	Address         string        `env:"APP_ADDRESS" envDefault:"0.0.0.0:8080"`
+	ShutdownTimeout time.Duration `env:"APP_SHUTDOWN_TIMEOUT" envDefault:"10s"`
 }
 
 type DBConfig struct {
-	Host string `yaml:"host"`
-	Port int    `yaml:"port"`
-	User string `yaml:"user"`
-	Pass string `yaml:"password"`
-	Name string `yaml:"name"`
+	Host string `env:"DB_HOST"`
+	Port int    `env:"DB_PORT"`
+	User string `env:"DB_USER"`
+	Pass string `env:"DB_PASSWORD"`
+	Name string `env:"DB_NAME"`
 }
 
 func Load() (Config, error) {
 	cfg := Config{}
 
-	data, err := os.ReadFile("config.yaml")
-	if err != nil {
-		return Config{}, fmt.Errorf("failed to read config.yaml: %w", err)
-	}
-
-	// Expand environment variables
-	expanded := os.ExpandEnv(string(data))
-
-	if err := yaml.Unmarshal([]byte(expanded), &cfg); err != nil {
-		return Config{}, fmt.Errorf("failed to parse config.yaml: %w", err)
+	if err := env.Parse(&cfg); err != nil {
+		return Config{}, fmt.Errorf("failed to parse config from environment: %w", err)
 	}
 
 	slog.Debug("configuration loaded", "config", cfg)

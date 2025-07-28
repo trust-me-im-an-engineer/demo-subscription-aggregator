@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/golang-migrate/migrate/v4"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -13,6 +14,9 @@ import (
 	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/internal/repository"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	_ "github.com/golang-migrate/migrate/v4/database/postgres" // PostgreSQL driver for golang-migrate
+	_ "github.com/golang-migrate/migrate/v4/source/file"       // File source for golang-migrate
 )
 
 // Статическая проверка что SubscriptionRepository реализует repository.SubscriptionRepository
@@ -25,7 +29,7 @@ type SubscriptionRepository struct {
 
 func New(ctx context.Context, cfg config.DBConfig) (SubscriptionRepository, error) {
 	dsn := fmt.Sprintf(
-		"postgres://%s:%s@%s:%d/%s",
+		"postgres://%s:%s@%s:%d/%s?sslmode=disable",
 		cfg.User, cfg.Pass, cfg.Host, cfg.Port, cfg.Name,
 	)
 	pool, err := pgxpool.New(ctx, dsn)
@@ -37,6 +41,25 @@ func New(ctx context.Context, cfg config.DBConfig) (SubscriptionRepository, erro
 		return SubscriptionRepository{}, fmt.Errorf("failed to ping database: %w", err)
 	}
 	slog.Info("connected to postgres database")
+
+	migrationPath := "file://./migrations" // Path to your migration files (relative to where the app runs)
+	m, err := migrate.New(migrationPath, dsn)
+	if err != nil {
+		pool.Close() // Close the pool if migration instance creation fails
+		return SubscriptionRepository{}, fmt.Errorf("failed to create migrate instance: %w", err)
+	}
+
+	slog.Info("Running database migrations...")
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		pool.Close() // Close the pool on migration error
+		return SubscriptionRepository{}, fmt.Errorf("failed to run migrations: %w", err)
+	}
+	if err == migrate.ErrNoChange {
+		slog.Info("No new database migrations to apply.")
+	} else {
+		slog.Info("Database migrations applied successfully.")
+	}
+
 	return SubscriptionRepository{pool: pool}, nil
 }
 

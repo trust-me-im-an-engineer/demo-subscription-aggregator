@@ -59,13 +59,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
-	subscriptionIDStr := r.URL.Query().Get("id")
-	if subscriptionIDStr == "" {
-		http.Error(w, "subscription ID is required", http.StatusBadRequest)
-		return
-	}
-
-	subscriptionID, err := uuid.Parse(subscriptionIDStr)
+	subscriptionID, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
 		http.Error(w, "invalid subscription ID format", http.StatusBadRequest)
 		return
@@ -173,13 +167,7 @@ func (h *Handler) parseTotalCostRequest(r *http.Request) (models.TotalCostReques
 }
 
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
-	subscriptionIDStr := r.URL.Query().Get("id")
-	if subscriptionIDStr == "" {
-		http.Error(w, "subscription ID is required", http.StatusBadRequest)
-		return
-	}
-
-	subscriptionID, err := uuid.Parse(subscriptionIDStr)
+	subscriptionID, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
 		http.Error(w, "invalid subscription ID format", http.StatusBadRequest)
 		return
@@ -200,19 +188,13 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
-	subscriptionIDStr := r.URL.Query().Get("id")
-	if subscriptionIDStr == "" {
-		http.Error(w, "subscription ID is required", http.StatusBadRequest)
-		return
-	}
-
-	subscriptionID, err := uuid.Parse(subscriptionIDStr)
+	id, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
 		http.Error(w, "invalid subscription ID format", http.StatusBadRequest)
 		return
 	}
 
-	resp, err := h.Service.GetSubscriptionByID(r.Context(), subscriptionID)
+	resp, err := h.Service.GetSubscriptionByID(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, repository.ErrSubscriptionNotFound) {
 			http.Error(w, err.Error(), http.StatusNotFound)

@@ -2,15 +2,17 @@ package main
 
 import (
 	"context"
-	"database/sql"
-	"github.com/google/uuid"
+	"errors"
 	"log/slog"
+	"net/http"
 	"os"
-	"time"
+	"os/signal"
+	"syscall"
 
 	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/internal/config"
-	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/internal/repository"
 	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/internal/repository/postgres"
+	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/internal/service/subscription"
+	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/internal/web"
 	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/pkg/logger"
 )
 
@@ -19,27 +21,51 @@ func main() {
 
 	cfg, err := config.Load()
 	if err != nil {
-		slog.Error("failed to load config: ", err)
+		slog.Error("failed to load config", "error", err)
+		os.Exit(1)
 	}
 
 	db, err := postgres.New(context.Background(), cfg.DB)
 	if err != nil {
-		slog.Error("failed to connect to database")
+		slog.Error("failed to initialize repository", "error", err)
 		os.Exit(1)
 	}
 	defer db.Close()
 
-	id, err := db.CreateSubscription(context.Background(), repository.Subscription{
-		ServiceName: "test service",
-		Price:       123,
-		UserID:      uuid.UUID{},
-		StartDate:   time.Now(),
-		EndDate:     sql.NullTime{},
-	})
-	if err != nil {
-		slog.Error("failed to create subscription", "error", err)
+	service := subscription.NewService(&db)
+	router := web.NewRouter(service)
+
+	server := &http.Server{
+		Addr:    cfg.App.Port,
+		Handler: router,
+	}
+
+	// Create a channel to listen for interrupt signals
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	// Start server in a goroutine
+	go func() {
+		slog.Info("starting server", "port", cfg.App.Port)
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			slog.Error("server error", "error", err)
+			os.Exit(1)
+		}
+	}()
+
+	// Wait for interrupt signal
+	sig := <-sigChan
+	slog.Info("received signal, shutting down gracefully with "+cfg.App.ShutdownTimeout.String()+" seconds deadline", "signal", sig)
+
+	// Create a context with timeout for shutdown
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.App.ShutdownTimeout)
+	defer cancel()
+
+	// Attempt graceful shutdown
+	if err := server.Shutdown(ctx); err != nil {
+		slog.Error("server forced to shutdown", "error", err)
 		os.Exit(1)
 	}
 
-	slog.Info("subscription created", "id", id.String())
+	slog.Info("server shutdown complete")
 }

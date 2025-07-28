@@ -2,33 +2,42 @@ package config
 
 import (
 	"fmt"
-	"github.com/ilyakaznacheev/cleanenv"
-	"github.com/joho/godotenv"
+	"gopkg.in/yaml.v3"
 	"log/slog"
+	"os"
+	"time"
 )
 
 type Config struct {
-	AppPort string `env:"APP_PORT" env-required:"true"`
-	DB      DBConfig
+	App AppConfig `yaml:"app"`
+	DB  DBConfig  `yaml:"db"`
 }
+
+type AppConfig struct {
+	Port            string        `yaml:"port"`
+	ShutdownTimeout time.Duration `yaml:"shutdown_timeout"`
+}
+
 type DBConfig struct {
-	Host string `env:"DB_HOST" env-default:"localhost"`
-	Port int    `env:"DB_PORT" env-default:"5432"`
-	User string `env:"DB_USER" env-required:"true"`
-	Pass string `env:"DB_PASSWORD" env-required:"true"`
-	Name string `env:"DB_NAME" env-required:"true"`
+	Host string `yaml:"host"`
+	Port int    `yaml:"port"`
+	User string `yaml:"user"`
+	Pass string `yaml:"password"`
+	Name string `yaml:"name"`
 }
 
 func Load() (Config, error) {
-	if err := godotenv.Load(".env"); err != nil {
-		return Config{}, fmt.Errorf("failed to load .env: %w", err)
-	}
-
 	cfg := Config{}
-	if err := cleanenv.ReadEnv(&cfg); err != nil {
-		return Config{}, fmt.Errorf("failed to read env: %w", err)
+
+	data, err := os.ReadFile("config.yaml")
+	if err != nil {
+		return Config{}, fmt.Errorf("failed to read config.yaml: %w", err)
 	}
 
-	slog.Info("Environment variables loaded")
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
+		return Config{}, fmt.Errorf("failed to parse config.yaml: %w", err)
+	}
+
+	slog.Info("configuration loaded from config.yaml")
 	return cfg, nil
 }

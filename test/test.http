@@ -1,0 +1,52 @@
+### Create a new subscription
+POST http://localhost:8000/subscriptions
+Content-Type: application/json
+
+{
+  "service_name": "Netflix",
+  "price": 299,
+  "user_id": "123e4567-e89b-12d3-a456-426614174000",
+  "start_date": "01-2024",
+  "end_date": "12-2024"
+}
+
+> {%
+    client.global.set("subscriptionId", response.body.id);
+%}
+
+###
+
+### Get all subscriptions
+GET http://localhost:8000/subscriptions
+
+###
+
+### Get subscription by ID
+GET http://localhost:8000/subscriptions/{{subscriptionId}}
+
+###
+
+### Update the subscription
+PUT http://localhost:8000/subscriptions/{{subscriptionId}}
+Content-Type: application/json
+
+{
+  "service_name": "Netflix Premium",
+  "price": 499,
+  "end_date": "11-2024"
+}
+
+###
+
+### Delete the subscription
+DELETE http://localhost:8000/subscriptions/{{subscriptionId}}
+
+###
+
+### Get total cost for user
+GET http://localhost:8000/subscriptions/total-cost?user_id=123e4567-e89b-12d3-a456-426614174000&start_date=01-2024&end_date=12-2024
+
+###
+
+### View Swagger docs
+GET http://localhost:8000/swagger/

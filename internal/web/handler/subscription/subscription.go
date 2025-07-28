@@ -81,6 +81,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 	resp, err := h.Service.GetAllSubscriptions(r.Context())
 	if err != nil {
+		slog.Error("repo failed to get all subscriptions", "error", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 

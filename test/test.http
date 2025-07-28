@@ -1,5 +1,5 @@
 ### Create a new subscription
-POST http://localhost:8000/subscriptions
+POST http://localhost:8080/subscriptions
 Content-Type: application/json
 
 {

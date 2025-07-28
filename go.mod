@@ -3,12 +3,12 @@ module github.com/trust-me-im-an-engineer/demo-subscription-agregator
 go 1.24
 
 require (
+	github.com/caarlos0/env/v6 v6.10.1
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/swaggo/http-swagger v1.3.4
 	github.com/swaggo/swag v1.16.5
-	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -35,4 +35,5 @@ require (
 	golang.org/x/sys v0.34.0 // indirect
 	golang.org/x/text v0.27.0 // indirect
 	golang.org/x/tools v0.35.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

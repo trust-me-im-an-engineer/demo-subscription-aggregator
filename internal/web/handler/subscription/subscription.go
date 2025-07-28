@@ -70,6 +70,55 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	h.writeJSONResponse(w, resp, http.StatusCreated)
 }
 
+// GetAll godoc
+// @Summary Get all subscriptions
+// @Description Get all subscriptions from the system
+// @Tags subscriptions
+// @Produce json
+// @Success 200 {array} models.SubscriptionResponse
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /subscriptions [get]
+func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
+	resp, err := h.Service.GetAllSubscriptions(r.Context())
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+
+	h.writeJSONResponse(w, resp, http.StatusOK)
+}
+
+// GetByID godoc
+// @Summary Get a subscription by ID
+// @Description Get a single subscription by its ID
+// @Tags subscriptions
+// @Produce json
+// @Param id path string true "Subscription ID" format(uuid)
+// @Success 200 {object} models.SubscriptionResponse
+// @Failure 400 {object} map[string]string "Bad request"
+// @Failure 404 {object} map[string]string "Subscription not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /subscriptions/{id} [get]
+func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, "invalid subscription ID format", http.StatusBadRequest)
+		return
+	}
+
+	resp, err := h.Service.GetSubscriptionByID(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, repository.ErrSubscriptionNotFound) {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+		slog.Error("service failed to get subscription", "error", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	h.writeJSONResponse(w, resp, http.StatusOK)
+}
+
 // Update godoc
 // @Summary Update a subscription
 // @Description Update an existing subscription
@@ -120,21 +169,35 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	h.writeJSONResponse(w, resp, http.StatusOK)
 }
 
-// GetAll godoc
-// @Summary Get all subscriptions
-// @Description Get all subscriptions from the system
+// Delete godoc
+// @Summary Delete a subscription
+// @Description Delete a subscription by ID
 // @Tags subscriptions
-// @Produce json
-// @Success 200 {array} models.SubscriptionResponse
+// @Param id path string true "Subscription ID" format(uuid)
+// @Success 204 "No content"
+// @Failure 400 {object} map[string]string "Bad request"
+// @Failure 404 {object} map[string]string "Subscription not found"
 // @Failure 500 {object} map[string]string "Internal server error"
-// @Router /subscriptions [get]
-func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
-	resp, err := h.Service.GetAllSubscriptions(r.Context())
+// @Router /subscriptions/{id} [delete]
+func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
+	subscriptionID, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		http.Error(w, "invalid subscription ID format", http.StatusBadRequest)
+		return
 	}
 
-	h.writeJSONResponse(w, resp, http.StatusOK)
+	err = h.Service.DeleteSubscription(r.Context(), subscriptionID)
+	if err != nil {
+		if errors.Is(err, repository.ErrSubscriptionNotFound) {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+		slog.Error("service failed to delete subscription", "error", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // GetTotalCost godoc
@@ -210,69 +273,6 @@ func (h *Handler) parseTotalCostRequest(r *http.Request) (models.TotalCostReques
 	}
 
 	return req, nil
-}
-
-// Delete godoc
-// @Summary Delete a subscription
-// @Description Delete a subscription by ID
-// @Tags subscriptions
-// @Param id path string true "Subscription ID" format(uuid)
-// @Success 204 "No content"
-// @Failure 400 {object} map[string]string "Bad request"
-// @Failure 404 {object} map[string]string "Subscription not found"
-// @Failure 500 {object} map[string]string "Internal server error"
-// @Router /subscriptions/{id} [delete]
-func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
-	subscriptionID, err := uuid.Parse(r.PathValue("id"))
-	if err != nil {
-		http.Error(w, "invalid subscription ID format", http.StatusBadRequest)
-		return
-	}
-
-	err = h.Service.DeleteSubscription(r.Context(), subscriptionID)
-	if err != nil {
-		if errors.Is(err, repository.ErrSubscriptionNotFound) {
-			http.Error(w, err.Error(), http.StatusNotFound)
-			return
-		}
-		slog.Error("service failed to delete subscription", "error", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
-}
-
-// GetByID godoc
-// @Summary Get a subscription by ID
-// @Description Get a single subscription by its ID
-// @Tags subscriptions
-// @Produce json
-// @Param id path string true "Subscription ID" format(uuid)
-// @Success 200 {object} models.SubscriptionResponse
-// @Failure 400 {object} map[string]string "Bad request"
-// @Failure 404 {object} map[string]string "Subscription not found"
-// @Failure 500 {object} map[string]string "Internal server error"
-// @Router /subscriptions/{id} [get]
-func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
-	id, err := uuid.Parse(r.PathValue("id"))
-	if err != nil {
-		http.Error(w, "invalid subscription ID format", http.StatusBadRequest)
-		return
-	}
-
-	resp, err := h.Service.GetSubscriptionByID(r.Context(), id)
-	if err != nil {
-		if errors.Is(err, repository.ErrSubscriptionNotFound) {
-			http.Error(w, err.Error(), http.StatusNotFound)
-			return
-		}
-		slog.Error("service failed to get subscription", "error", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-
-	h.writeJSONResponse(w, resp, http.StatusOK)
 }
 
 func (h *Handler) writeJSONResponse(w http.ResponseWriter, data interface{}, statusCode int) {

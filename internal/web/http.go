@@ -13,8 +13,8 @@ func NewRouter(s service.SubscriptionService) *http.ServeMux {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("POST /subscriptions", h.Create)
-	mux.HandleFunc("GET /subscriptions/{id}", h.GetByID)
 	mux.HandleFunc("GET /subscriptions", h.GetAll)
+	mux.HandleFunc("GET /subscriptions/{id}", h.GetByID)
 	mux.HandleFunc("PUT /subscriptions/{id}", h.Update)
 	mux.HandleFunc("DELETE /subscriptions/{id}", h.Delete)
 	mux.HandleFunc("GET /subscriptions/total-cost", h.GetTotalCost)

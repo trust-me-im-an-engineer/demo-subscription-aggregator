@@ -18,6 +18,13 @@ type Subscription struct {
 	EndDate     sql.NullTime `db:"end_date"`
 }
 
+// At least one field must be provided
+type SubscriptionUpdate struct {
+	ServiceName *string
+	Price       *int
+	EndDate     *time.Time
+}
+
 type SubscriptionFilter struct {
 	ServiceName *string
 	UserID      *uuid.UUID
@@ -34,7 +41,7 @@ type SubscriptionRepository interface {
 	CreateSubscription(ctx context.Context, sub Subscription) (uuid.UUID, error)
 	GetSubscriptionByID(ctx context.Context, id uuid.UUID) (Subscription, error)
 	GetAllSubscriptions(ctx context.Context) ([]Subscription, error)
-	UpdateSubscription(ctx context.Context, sub Subscription) (Subscription, error)
+	UpdateSubscription(ctx context.Context, id uuid.UUID, fields SubscriptionUpdate) (Subscription, error)
 	DeleteSubscription(ctx context.Context, id uuid.UUID) error
 	GetTotalCostWithFilters(ctx context.Context, filter SubscriptionFilter) (int, error)
 }

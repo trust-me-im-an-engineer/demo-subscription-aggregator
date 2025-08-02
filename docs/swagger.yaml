@@ -208,7 +208,7 @@ paths:
       summary: Get a subscription by ID
       tags:
       - subscriptions
-    put:
+    patch:
       consumes:
       - application/json
       description: Update an existing subscription

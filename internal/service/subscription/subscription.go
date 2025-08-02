@@ -98,29 +98,26 @@ func (s Service) GetAllSubscriptions(ctx context.Context) ([]models.Subscription
 }
 
 func (s Service) UpdateSubscription(ctx context.Context, id uuid.UUID, req models.UpdateSubscriptionRequest) (models.SubscriptionResponse, error) {
-	sub, err := s.repo.GetSubscriptionByID(ctx, id)
-	if err != nil {
-		return models.SubscriptionResponse{}, err
-	}
-
-	if req.ServiceName != nil {
-		sub.ServiceName = *req.ServiceName
-	}
-	if req.Price != nil {
-		sub.Price = *req.Price
+	fields := repository.SubscriptionUpdate{
+		ServiceName: req.ServiceName,
+		Price:       req.Price,
 	}
 	if req.EndDate != nil {
 		endDate := time.Time(*req.EndDate)
+
+		sub, err := s.repo.GetSubscriptionByID(ctx, id)
+		if err != nil {
+			return models.SubscriptionResponse{}, fmt.Errorf("repo failed to get subcsciption by id: %w", err)
+		}
+
 		if endDate.Before(sub.StartDate) {
 			return models.SubscriptionResponse{}, service.ErrInvalidDateRange
 		}
-		sub.EndDate = sql.NullTime{
-			Time:  endDate,
-			Valid: true,
-		}
+
+		fields.EndDate = &endDate
 	}
 
-	updatedSub, err := s.repo.UpdateSubscription(ctx, sub)
+	updatedSub, err := s.repo.UpdateSubscription(ctx, id, fields)
 	if err != nil {
 		return models.SubscriptionResponse{}, fmt.Errorf("repo failed to update subcsciption: %w", err)
 	}
@@ -131,7 +128,7 @@ func (s Service) UpdateSubscription(ctx context.Context, id uuid.UUID, req model
 		Price:       updatedSub.Price,
 		UserID:      updatedSub.UserID,
 	}
-	startDate := monthyear.MonthYear(sub.StartDate)
+	startDate := monthyear.MonthYear(updatedSub.StartDate)
 	resp.StartDate = &startDate
 	if updatedSub.EndDate.Valid {
 		endDate := monthyear.MonthYear(updatedSub.EndDate.Time)

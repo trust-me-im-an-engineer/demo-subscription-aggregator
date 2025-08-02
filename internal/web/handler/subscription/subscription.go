@@ -132,7 +132,7 @@ func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} map[string]string "Bad request"
 // @Failure 404 {object} map[string]string "Subscription not found"
 // @Failure 500 {object} map[string]string "Internal server error"
-// @Router /subscriptions/{id} [put]
+// @Router /subscriptions/{id} [patch]
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	subscriptionID, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {

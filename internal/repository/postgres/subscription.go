@@ -141,11 +141,30 @@ func (r *SubscriptionRepository) DeleteSubscription(ctx context.Context, id uuid
 	slog.Debug("subscription deleted", "id", id)
 	return nil
 }
-func (r *SubscriptionRepository) UpdateSubscription(ctx context.Context, sub repository.Subscription) (repository.Subscription, error) {
-	query := `UPDATE subscriptions SET service_name = $1, price = $2, user_id = $3, start_date = $4, end_date = $5 WHERE id = $6
-              RETURNING id, service_name, price, user_id, start_date, end_date`
+
+func (r *SubscriptionRepository) UpdateSubscription(ctx context.Context, id uuid.UUID, fields repository.SubscriptionUpdate) (repository.Subscription, error) {
+	query := squirrel.Update("subscriptions").
+		Where(squirrel.Eq{"id": id}).
+		Suffix("RETURNING id, service_name, price, user_id, start_date, end_date").
+		PlaceholderFormat(squirrel.Dollar)
+
+	if fields.ServiceName != nil {
+		query = query.Set("service_name", *fields.ServiceName)
+	}
+	if fields.Price != nil {
+		query = query.Set("price", *fields.Price)
+	}
+	if fields.EndDate != nil {
+		query = query.Set("end_date", *fields.EndDate)
+	}
+
+	sql, args, err := query.ToSql()
+	if err != nil {
+		return repository.Subscription{}, fmt.Errorf("failed to build update query: %w", err)
+	}
+
 	var updatedSub repository.Subscription
-	err := r.pool.QueryRow(ctx, query, sub.ServiceName, sub.Price, sub.UserID, sub.StartDate, sub.EndDate, sub.ID).Scan(
+	err = r.pool.QueryRow(ctx, sql, args...).Scan(
 		&updatedSub.ID,
 		&updatedSub.ServiceName,
 		&updatedSub.Price,
@@ -160,12 +179,12 @@ func (r *SubscriptionRepository) UpdateSubscription(ctx context.Context, sub rep
 		}
 		var pgxError *pgconn.PgError
 		if errors.As(err, &pgxError) {
-			// Unique constrain failed
+			// Unique constraint failed
 			if pgxError.Code == "23505" {
 				return repository.Subscription{}, repository.ErrSubscriptionAlreadyExists
 			}
 		}
-		return repository.Subscription{}, fmt.Errorf("failed to update or retrieve subscription: %w", err)
+		return repository.Subscription{}, fmt.Errorf("failed to update subscription: %w", err)
 	}
 
 	slog.Debug("subscription updated", "subscription", updatedSub)

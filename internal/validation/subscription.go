@@ -55,6 +55,10 @@ func (v *Validator) updateSubscriptionRequest(sl validator.StructLevel) {
 	if req.ServiceName != nil && *req.ServiceName == "" {
 		sl.ReportError(req.ServiceName, "service_name", "ServiceName", "required", "service name cannot be empty")
 	}
+
+	if req.ServiceName == nil && req.Price == nil && req.EndDate == nil {
+		sl.ReportError(req, "request_body", "RequestBody", "at_least_one_required", "at least one field must be provided")
+	}
 }
 
 func (v *Validator) totalCostRequest(sl validator.StructLevel) {

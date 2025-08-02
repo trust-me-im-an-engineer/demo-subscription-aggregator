@@ -50,11 +50,11 @@ func New(ctx context.Context, cfg config.DBConfig) (SubscriptionRepository, erro
 	}
 
 	slog.Info("Running database migrations...")
-	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+	if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		pool.Close() // Close the pool on migration error
 		return SubscriptionRepository{}, fmt.Errorf("failed to run migrations: %w", err)
 	}
-	if err == migrate.ErrNoChange {
+	if errors.Is(err, migrate.ErrNoChange) {
 		slog.Info("No new database migrations to apply.")
 	} else {
 		slog.Info("Database migrations applied successfully.")

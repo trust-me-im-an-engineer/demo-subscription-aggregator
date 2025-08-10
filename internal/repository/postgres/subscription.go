@@ -9,11 +9,11 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"log/slog"
+	"strings"
 
 	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/internal/config"
 	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/internal/repository"
 
-	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	_ "github.com/golang-migrate/migrate/v4/database/postgres" // PostgreSQL driver for golang-migrate
@@ -141,30 +141,37 @@ func (r *SubscriptionRepository) DeleteSubscription(ctx context.Context, id uuid
 	slog.Debug("subscription deleted", "id", id)
 	return nil
 }
-
 func (r *SubscriptionRepository) UpdateSubscription(ctx context.Context, id uuid.UUID, fields repository.SubscriptionUpdate) (repository.Subscription, error) {
-	query := squirrel.Update("subscriptions").
-		Where(squirrel.Eq{"id": id}).
-		Suffix("RETURNING id, service_name, price, user_id, start_date, end_date").
-		PlaceholderFormat(squirrel.Dollar)
+	var builder strings.Builder
+	builder.WriteString("UPDATE subscriptions SET ")
+
+	args := []interface{}{}
+	argCounter := 1
 
 	if fields.ServiceName != nil {
-		query = query.Set("service_name", *fields.ServiceName)
+		builder.WriteString(fmt.Sprintf("service_name = $%d, ", argCounter))
+		args = append(args, *fields.ServiceName)
+		argCounter++
 	}
 	if fields.Price != nil {
-		query = query.Set("price", *fields.Price)
+		builder.WriteString(fmt.Sprintf("price = $%d, ", argCounter))
+		args = append(args, *fields.Price)
+		argCounter++
 	}
 	if fields.EndDate != nil {
-		query = query.Set("end_date", *fields.EndDate)
+		builder.WriteString(fmt.Sprintf("end_date = $%d, ", argCounter))
+		args = append(args, *fields.EndDate)
+		argCounter++
 	}
 
-	sql, args, err := query.ToSql()
-	if err != nil {
-		return repository.Subscription{}, fmt.Errorf("failed to build update query: %w", err)
-	}
+	// Remove the trailing comma and space
+	sql := builder.String()[:builder.Len()-2]
+
+	sql += fmt.Sprintf(" WHERE id = $%d RETURNING id, service_name, price, user_id, start_date, end_date", argCounter)
+	args = append(args, id)
 
 	var updatedSub repository.Subscription
-	err = r.pool.QueryRow(ctx, sql, args...).Scan(
+	err := r.pool.QueryRow(ctx, sql, args...).Scan(
 		&updatedSub.ID,
 		&updatedSub.ServiceName,
 		&updatedSub.Price,
@@ -179,7 +186,6 @@ func (r *SubscriptionRepository) UpdateSubscription(ctx context.Context, id uuid
 		}
 		var pgxError *pgconn.PgError
 		if errors.As(err, &pgxError) {
-			// Unique constraint failed
 			if pgxError.Code == "23505" {
 				return repository.Subscription{}, repository.ErrSubscriptionAlreadyExists
 			}
@@ -192,32 +198,34 @@ func (r *SubscriptionRepository) UpdateSubscription(ctx context.Context, id uuid
 }
 
 func (r *SubscriptionRepository) GetTotalCostWithFilters(ctx context.Context, filter repository.SubscriptionFilter) (int, error) {
-	query := squirrel.Select("COALESCE(SUM(price), 0)").
-		From("subscriptions").
-		PlaceholderFormat(squirrel.Dollar)
+	query := `SELECT SUM(price) FROM subscriptions WHERE TRUE`
+	args := make([]any, 0, 1)
+	argID := 1
 
 	if filter.UserID != nil {
-		query = query.Where(squirrel.Eq{"user_id": *filter.UserID})
+		query += fmt.Sprintf(" AND user_id = $%d", argID)
+		args = append(args, *filter.UserID)
+		argID++
 	}
 	if filter.ServiceName != nil {
-		query = query.Where(squirrel.ILike{"service_name": "%" + *filter.ServiceName + "%"})
+		query += fmt.Sprintf(" AND service_name ILIKE $%d", argID)
+		args = append(args, "%"+*filter.ServiceName+"%")
+		argID++
 	}
 	if filter.StartDate != nil {
-		query = query.Where(squirrel.GtOrEq{"start_date": *filter.StartDate})
+		query += fmt.Sprintf(" AND start_date >= $%d", argID)
+		args = append(args, *filter.StartDate)
+		argID++
 	}
 	if filter.EndDate != nil {
-		query = query.Where(squirrel.LtOrEq{"end_date": *filter.EndDate})
-	}
-
-	sql, args, err := query.ToSql()
-	if err != nil {
-		return 0, fmt.Errorf("failed to build query: %w", err)
+		query += fmt.Sprintf(" AND end_date <= $%d", argID)
+		args = append(args, *filter.EndDate)
 	}
 
 	var totalCost int
-	err = r.pool.QueryRow(ctx, sql, args...).Scan(&totalCost)
+	err := r.pool.QueryRow(ctx, query, args...).Scan(&totalCost)
 	if err != nil {
-		return 0, fmt.Errorf("failed to execute query: %w", err)
+		return 0, err
 	}
 
 	slog.Debug("total cost with filters calculated", "total_cost", totalCost, "filter", filter)

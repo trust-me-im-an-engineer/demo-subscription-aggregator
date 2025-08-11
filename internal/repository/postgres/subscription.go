@@ -198,7 +198,16 @@ func (r *SubscriptionRepository) UpdateSubscription(ctx context.Context, id uuid
 }
 
 func (r *SubscriptionRepository) GetTotalCostWithFilters(ctx context.Context, filter repository.SubscriptionFilter) (int, error) {
-	query := `SELECT SUM(price) FROM subscriptions WHERE TRUE`
+	query := `
+		SELECT SUM(
+			price * (
+				EXTRACT(YEAR FROM age(LEAST(end_date, $1), GREATEST(start_date, $2))) * 12 +
+				EXTRACT(MONTH FROM age(LEAST(end_date, $1), GREATEST(start_date, $2)))
+			)
+		)
+		FROM subscriptions
+		WHERE TRUE`
+
 	args := make([]any, 0, 1)
 	argID := 1
 

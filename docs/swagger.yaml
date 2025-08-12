@@ -79,7 +79,7 @@ info:
 paths:
   /subscriptions:
     get:
-      description: Get all subscriptions from the system
+      description: List subscriptions from the system
       produces:
       - application/json
       responses:
@@ -89,13 +89,19 @@ paths:
             items:
               $ref: '#/definitions/models.SubscriptionResponse'
             type: array
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "500":
           description: Internal server error
           schema:
             additionalProperties:
               type: string
             type: object
-      summary: Get all subscriptions
+      summary: List subscriptions
       tags:
       - subscriptions
     post:

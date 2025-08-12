@@ -25,6 +25,16 @@ type SubscriptionUpdate struct {
 	EndDate     *time.Time
 }
 
+type SubscriptionCursor struct {
+	StartDate time.Time
+	ID        uuid.UUID
+}
+
+type SubscriptionPagination struct {
+	Limit  int
+	Cursor *SubscriptionCursor
+}
+
 type SubscriptionFilter struct {
 	ServiceName *string
 	UserID      *uuid.UUID
@@ -40,7 +50,7 @@ var (
 type SubscriptionRepository interface {
 	CreateSubscription(ctx context.Context, sub Subscription) (uuid.UUID, error)
 	GetSubscriptionByID(ctx context.Context, id uuid.UUID) (Subscription, error)
-	GetAllSubscriptions(ctx context.Context) ([]Subscription, error)
+	ListSubscriptions(ctx context.Context, pagination SubscriptionPagination) ([]Subscription, error)
 	UpdateSubscription(ctx context.Context, id uuid.UUID, fields SubscriptionUpdate) (Subscription, error)
 	DeleteSubscription(ctx context.Context, id uuid.UUID) error
 	GetTotalCostWithFilters(ctx context.Context, filter SubscriptionFilter) (int, error)

@@ -23,6 +23,16 @@ type UpdateSubscriptionRequest struct {
 	EndDate     *monthyear.MonthYear `json:"end_date,omitempty" example:"12-2024" description:"Обновлённая дата окончания в формате ММ-ГГГГ"`
 }
 
+type SubscriptionCursor struct {
+	StartDate monthyear.MonthYear `validate:"required" example:"01-2024" description:"Последняя дата начала в прошлом запросе"`
+	ID        uuid.UUID           `validate:"required" example:"123e4567-e89b-12d3-a456-426614174000" description:"Последний id в прошлом запросе"`
+}
+
+type ListSubscriptionsRequest struct {
+	Limit  int `validate:"required,min=1" example:"30" description:"Ограничение количества подписок"`
+	Cursor *SubscriptionCursor
+}
+
 // TotalCostRequest представляет параметры запроса для расчёта общей стоимости
 type TotalCostRequest struct {
 	UserID      *uuid.UUID           `json:"user_id,omitempty" example:"123e4567-e89b-12d3-a456-426614174000" description:"Фильтр по ID пользователя"`

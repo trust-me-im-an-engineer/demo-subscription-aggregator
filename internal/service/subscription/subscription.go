@@ -13,6 +13,8 @@ import (
 	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/pkg/monthyear"
 )
 
+var _ service.SubscriptionService = (*Service)(nil)
+
 type Service struct {
 	repo repository.SubscriptionRepository
 }
@@ -73,11 +75,20 @@ func (s Service) GetSubscriptionByID(ctx context.Context, id uuid.UUID) (models.
 	return resp, nil
 }
 
-func (s Service) GetAllSubscriptions(ctx context.Context) ([]models.SubscriptionResponse, error) {
-	subs, err := s.repo.GetAllSubscriptions(ctx)
+func (s Service) ListSubscriptions(ctx context.Context, req models.ListSubscriptionsRequest) ([]models.SubscriptionResponse, error) {
+	pagination := repository.SubscriptionPagination{Limit: req.Limit}
+	if req.Cursor != nil {
+		pagination.Cursor = &repository.SubscriptionCursor{
+			StartDate: time.Time(req.Cursor.StartDate),
+			ID:        req.Cursor.ID,
+		}
+	}
+
+	subs, err := s.repo.ListSubscriptions(ctx, pagination)
 	if err != nil {
 		return []models.SubscriptionResponse{}, fmt.Errorf("repo failed to get all subcsciptions: %w", err)
 	}
+
 	responds := make([]models.SubscriptionResponse, len(subs))
 	for i, sub := range subs {
 		responds[i] = models.SubscriptionResponse{

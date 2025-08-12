@@ -13,7 +13,7 @@ var ErrInvalidDateRange = errors.New("end date cannot be before start date")
 type SubscriptionService interface {
 	CreateSubscription(ctx context.Context, req models.CreateSubscriptionRequest) (models.SubscriptionResponse, error)
 	GetSubscriptionByID(ctx context.Context, id uuid.UUID) (models.SubscriptionResponse, error)
-	GetAllSubscriptions(ctx context.Context) ([]models.SubscriptionResponse, error)
+	ListSubscriptions(ctx context.Context, req models.ListSubscriptionsRequest) ([]models.SubscriptionResponse, error)
 	UpdateSubscription(ctx context.Context, id uuid.UUID, req models.UpdateSubscriptionRequest) (models.SubscriptionResponse, error)
 	DeleteSubscription(ctx context.Context, id uuid.UUID) error
 	GetTotalCost(ctx context.Context, filter models.TotalCostRequest) (models.TotalCostResponse, error)

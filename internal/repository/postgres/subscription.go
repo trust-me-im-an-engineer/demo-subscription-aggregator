@@ -104,14 +104,26 @@ func (r *SubscriptionRepository) GetSubscriptionByID(ctx context.Context, id uui
 	return sub, nil
 }
 
-func (r *SubscriptionRepository) GetAllSubscriptions(ctx context.Context) ([]repository.Subscription, error) {
-	query := `SELECT id, service_name, price, user_id, start_date, end_date FROM subscriptions`
-	rows, err := r.pool.Query(ctx, query)
+func (r *SubscriptionRepository) ListSubscriptions(ctx context.Context, pagination repository.SubscriptionPagination) ([]repository.Subscription, error) {
+	var builder strings.Builder
+	args := make([]any, 0, 1)
+
+	builder.WriteString("SELECT id, service_name, price, user_id, start_date, end_date FROM subscriptions ")
+
+	if pagination.Cursor != nil {
+		builder.WriteString("WHERE (start_date, id) > ($2, $3) ")
+		args = append(args, pagination.Cursor.StartDate, pagination.Cursor.ID)
+	}
+
+	builder.WriteString("ORDER BY start_date, id LIMIT $1")
+	args = append(args, pagination.Limit)
+
+	rows, err := r.pool.Query(ctx, builder.String(), args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query subscriptions: %w", err)
 	}
 
-	subs := make([]repository.Subscription, 0)
+	subs := make([]repository.Subscription, 0, pagination.Limit)
 	for rows.Next() {
 		var sub repository.Subscription
 		err := rows.Scan(&sub.ID, &sub.ServiceName, &sub.Price, &sub.UserID, &sub.StartDate, &sub.EndDate)
@@ -122,10 +134,10 @@ func (r *SubscriptionRepository) GetAllSubscriptions(ctx context.Context) ([]rep
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("failed to scan all subscriptions: %w", err)
+		return nil, fmt.Errorf("failed to scan subscriptions: %w", err)
 	}
 
-	slog.Debug("all subscriptions fetched", "total", len(subs))
+	slog.Debug("subscriptions fetched")
 	return subs, nil
 }
 
@@ -145,7 +157,7 @@ func (r *SubscriptionRepository) UpdateSubscription(ctx context.Context, id uuid
 	var builder strings.Builder
 	builder.WriteString("UPDATE subscriptions SET ")
 
-	args := []interface{}{}
+	args := make([]any, 0, 1)
 	argCounter := 1
 
 	if fields.ServiceName != nil {

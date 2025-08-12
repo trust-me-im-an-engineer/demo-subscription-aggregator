@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/google/uuid"
 	"log/slog"
@@ -70,16 +71,42 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	h.writeJSONResponse(w, resp, http.StatusCreated)
 }
 
-// GetAll godoc
-// @Summary Get all subscriptions
-// @Description Get all subscriptions from the system
+// List godoc
+// @Summary List subscriptions
+// @Description List subscriptions from the system
 // @Tags subscriptions
 // @Produce json
 // @Success 200 {array} models.SubscriptionResponse
+// @Failure 400 {object} map[string]string "Bad request"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /subscriptions [get]
-func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
-	resp, err := h.Service.GetAllSubscriptions(r.Context())
+func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
+	req := models.ListSubscriptionsRequest{}
+
+	limit, err := strconv.Atoi(r.PathValue("limit"))
+	if err != nil {
+		http.Error(w, "limit required", http.StatusBadRequest)
+	}
+	req.Limit = limit
+
+	rawID := r.PathValue("previous_id")
+	if rawID != "" {
+		id, err := uuid.Parse(rawID)
+		if err != nil {
+			slog.Debug("invalid id provided", "id", rawID, "err", err)
+			http.Error(w, "invalid previous_id format", http.StatusBadRequest)
+		}
+
+		var startDate monthyear.MonthYear
+		if err := startDate.UnmarshalJSON([]byte(r.PathValue("previous_start_date"))); err != nil {
+			slog.Debug("invalid start date provided", "err", err)
+			http.Error(w, "invalid previous_start_date format", http.StatusBadRequest)
+		}
+
+		req.Cursor = &models.SubscriptionCursor{ID: id, StartDate: startDate}
+	}
+
+	resp, err := h.Service.ListSubscriptions(r.Context(), req)
 	if err != nil {
 		slog.Error("repo failed to get all subscriptions", "error", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)

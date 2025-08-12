@@ -12,7 +12,6 @@ import (
 	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/internal/config"
 	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/internal/repository/postgres"
 	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/internal/service/subscription"
-	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/internal/web"
 	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/pkg/logger"
 
 	// Import generated docs
@@ -52,7 +51,7 @@ func main() {
 	defer db.Close()
 
 	service := subscription.NewService(&db)
-	router := web.NewRouter(service)
+	router := api.NewRouter(service)
 
 	server := &http.Server{
 		Addr:    cfg.App.Address,

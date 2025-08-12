@@ -1,15 +1,16 @@
-package web
+package api
 
 import (
 	httpSwagger "github.com/swaggo/http-swagger"
 	"net/http"
 
+	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/internal/web/handler"
+
 	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/internal/service"
-	"github.com/trust-me-im-an-engineer/demo-subscription-agregator/internal/web/handler/subscription"
 )
 
 func NewRouter(s service.SubscriptionService) *http.ServeMux {
-	h := subscription.NewHandler(s)
+	h := handler.NewHandler(s)
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("POST /subscriptions", h.Create)
